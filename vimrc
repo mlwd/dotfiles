@@ -2,12 +2,18 @@
 " Disable compatibility of Vim with Vi.
 set nocompatible
 
-" Display text in colors which are supposed to look good on a light background.
-" The light option is more readable in a terminal with black background
-" compared to the dark option which should be better choice according to the
-" manual.
+" Enable automatic detection of filetypes when opening a file or creating
+" a new buffer. Load plugins specific to the type of the file after detection.
+filetype plugin on
+
+" Allow to remove text of different categories with the backspace key.
+set backspace=indent,eol,start
+
+" Adjust colors to a dark background.
+colorscheme default
 set background=light
-highlight Search ctermbg=White ctermfg=Black
+hi Search ctermfg=white ctermbg=black
+hi IncSearch ctermfg=yellow ctermbg=black
 
 " Perform case sensitive searches by default.
 " Case sensitivity can be disabled by including \C anywhere in a pattern.
@@ -15,6 +21,8 @@ set noignorecase
 
 " Show (partial) command in the last line of the screen.
 set showcmd
+
+set vb t_vb=
 
 " Increase the number of ex commands be saved in the history from 50 to 200.
 set history=200
@@ -30,8 +38,9 @@ set path+=**
 " Incremental search.
 set incsearch
 
-" Highlight search, can be disabled with :nohl after a search.
+" Enable highlight search and use backspace to clear search highlighting.
 set hlsearch
+nnoremap <backspace> :noh<cr>
 
 " Do not beep in case of errors but show an indication of failed command in
 " the status line instead.
@@ -51,7 +60,6 @@ syntax enable
 set ruler
 
 set autoindent
-autocmd FileType text setlocal textwidth=79
 
 " The number of rows which are used to display the command line.
 set cmdheight=1
@@ -69,9 +77,7 @@ set listchars=tab:>-,trail:-
 set scrolloff=1
 
 " Limit the number of characters displayed per line.
-" In insert mode a carriage return is inserted automatically during
-" typing when this number is exceeded.
-set textwidth=80
+set wrap
 
 " Disable scanning files for modelines which can be used to set per-file
 " options.
@@ -79,10 +85,10 @@ set nomodeline
 
 " Display opened folds with minus and closed folds with plus in a column
 " of the given width at the left margin of the editor window.
-set foldcolumn=4
+"set foldcolumn=4
 
 " Width of a tab character.
-set tabstop=2
+set tabstop=4
 
 " Backspace and <C-h> remove this number spaces at once when these spaces
 " occur at the beginning of a line, i.e. when they are used for indentation.
@@ -108,7 +114,7 @@ let mapleader=" "
 autocmd FileType make setlocal ts=4 sts=4 sw=4 noexpandtab
 
 " Use clang-format instead of Vim's built-in formatter for C/C++ files.
-autocmd FileType c,cpp setlocal formatprg=vimformatprg.py
+autocmd FileType c,cpp setlocal formatprg=clang-format
 
 " Bash-like autocompletion in command mode.
 set wildmode=longest,list
@@ -121,7 +127,7 @@ set spelllang=en_gb
 
 " Insert include guard for C/C++ header files.
 " Author as a script local variable specified via "s:".
-let s:author = "mlwd"
+let s:author = "Michael Wende"
 function! HeaderDoc()
   execute "normal i/*! \\file"
   execute "normal o \\brief"
@@ -148,7 +154,7 @@ function! Header()
   " Separate documentation block and include guard by an empty line.
   execute "normal o"
   " Generate preprocessor include guard macro.
-  call <sid>HeaderGuard()
+  call <SID>HeaderGuard()
   " Move to the end of the line containing the brief file description tag.
   execute "normal 8k$"
 endfunction
@@ -181,6 +187,19 @@ function! Frame()
 endfunction
 " Map command to function.
 command! -nargs=0 Frame call Frame()
+
+" Clean up whitespace.
+function! s:Clean()
+  " Replace tabs with spaces.
+  execute "retab"
+  " Remove trailing whitespace.
+  try
+    execute "%s/\\s\\+$//"
+  catch
+    echo "No trailing whitespace found."
+  endtry
+endfunction
+command! -nargs=0 Clean call <sid>Clean()
 
 " Run pdflatex on the current buffer.
 " The shorter function name Tex is already used by the NetRW plugin.
@@ -220,9 +239,9 @@ function! s:IncludeNewLine()
     execute "normal o"
   endif
 endfunction
-" Prefix <sid> restrict function look up to script local functions.
-nmap <leader>i :call <sid>IncludeNewLine()<cr>i#include "<Esc>i"
-nmap <leader>I :call <sid>IncludeNewLine()<cr>i#include ><Esc>i<
+" Prefix <SID> restrict function look up to script local functions.
+nmap <leader>i :call <SID>IncludeNewLine()<CR>i#include "<Esc>i"
+nmap <leader>I :call <SID>IncludeNewLine()<CR>i#include ><Esc>i<
 
 " Scroll slower than up and down would usually do, only ten lines at a time.
 nnoremap <C-U> 10<C-Y>
@@ -231,21 +250,21 @@ nnoremap <C-D> 10<C-E>
 " Make it easier to open files from the same directory as the file which is
 " currently being edited according to the suggestions from
 "   vimcasts.org/e/14
-nnoremap <leader>ew :edit    <C-r>=expand("%:p:h") . "/" <cr>
-nnoremap <leader>es :split   <C-r>=expand("%:p:h") . "/" <cr>
-nnoremap <leader>ev :vsplit  <C-r>=expand("%:p:h") . "/" <cr>
-nnoremap <leader>et :tabedit <C-r>=expand("%:p:h") . "/" <cr>
+nnoremap <leader>ew :edit    <C-r>=expand("%:p:h") . "/" <CR>
+nnoremap <leader>es :split   <C-r>=expand("%:p:h") . "/" <CR>
+nnoremap <leader>ev :vsplit  <C-r>=expand("%:p:h") . "/" <CR>
+nnoremap <leader>et :tabedit <C-r>=expand("%:p:h") . "/" <CR>
 
 " Open and focus Nerd Tree.
-nnoremap <leader>t :NERDTree<cr>
-nnoremap <leader>f :NERDTreeFocus<cr>
-nnoremap <leader>F :NERDTreeFind<cr>
-nnoremap <leader>c :NERDTreeClose<cr>
+nnoremap <leader>t :NERDTree<CR>
+nnoremap <leader>f :NERDTreeFocus<CR>
+nnoremap <leader>F :NERDTreeFind<CR>
+nnoremap <leader>c :NERDTreeClose<CR>
 
 " Show buffer list of the bufexplorer plugin.
 let g:bufExplorerFindActive = 1
 let g:bufExplorerDisableDefaultKeyMapping = 1
-noremap <unique> <leader>b :BufExplorer<cr>
+noremap <unique> <leader>b :BufExplorer<CR>
 
 " Commands for switching from editing a C/ C++ source file to editing the
 " corresponding header file or vice versa. Source and header files are
@@ -270,37 +289,15 @@ function! s:HeaderOrSourceToFwdHeader()
   return substitute(expand('%'), '\.[ch]\(pp\)\?', '_fwd.h\1', '')
 endfunction
 
-" Assuming that the current buffer refers to a .c or .cpp source file,
-" try to edit the corresponding .h or .hpp header file.
-" The header is not created if it does not already exist.
-function! s:EditHeader()
-  let l:sourcefile = expand('%')
-  let l:headerfile = substitute(l:sourcefile, '\(_fwd\)\?\.[ch]\(pp\)\?$', '.h\2', '')
-  if "" != findfile(l:headerfile, getcwd())
-    execute "edit " . l:headerfile
-    return
-  endif
-  " If the source file was .cpp, try to find a .h header if a header ending
-  " with .hpp could not be found.
-  if -1 != match(l:sourcefile, '\.cpp$')
-    let l:headerfile = substitute(l:headerfile, 'pp$', '', '')
-    if "" != findfile(l:headerfile, getcwd())
-      execute "edit " . l:headerfile
-      return
-    endif
-  endif
-  echo "Header file could not be found."
-endfunction
-
 " Switch to C/C++ header file.
-map <leader>eh :call <sid>EditHeader()<cr>
+map <leader>eh :edit <C-r>=<SID>SourceOrFwdHeaderToHeader() <CR> <CR>
 " Switch to C/C++ source file.
-map <leader>ec :edit <C-r>=<sid>HeaderOrFwdHeaderToSource() <cr> <cr>
+map <leader>ec :edit <C-r>=<SID>HeaderOrFwdHeaderToSource() <CR> <CR>
 " Switch to C/C++ forward declartion header file.
-map <leader>ef :edit <C-r>=<sid>HeaderOrSourceToFwdHeader() <cr> <cr>
+map <leader>ef :edit <C-r>=<SID>HeaderOrSourceToFwdHeader() <CR> <CR>
 
-" Use backspace to switch to alternate buffer.
-nmap <leader>a :b# <cr>
+" Switch to alternate buffer.
+nmap <leader>a :b#<cr>
 
 " Shortcuts for switching between buffers.
 " Up and down arrow keys for writing and cycling between buffers.
@@ -354,70 +351,56 @@ if !exists("g:autocommand_vimrc") || g:autocommand_vimrc  == 0
   autocmd BufWritePost *.gpl call system("gnuplot -p < " . expand("%"))
 endif
 
+" ALE syntax checker.
+" Disable higlight colors for errors and warnings.
+let g:ale_set_highlights = 0
+" Do not lint when opening a file or changing text,
+" only lint when a file is being saved.
+let g:ale_lint_on_enter = 0
+let g:ale_lint_on_text_changed = 0
+
+" Specify linters for C++ and JavaScript.
+let g:ale_linters = {'cpp' : ['clang'], 'js' : ['eslint']}
+let g:ale_sign_column_always = 1
+
+" Clear the location list from linter messages.
+" nmap <silent> <C-c> :ALEReset<Enter>
+" nmap <silent> <C-l> :ALELint<Enter>
+" Move forward and backward between errors.
+" nmap <silent> <C-k> :ALEPrevious<Enter>
+" nmap <silent> <C-j> :ALENext<Enter>
+
 " Set theme for the airline plugin.
 let g:airline_theme='term'
 
-" Install fzf fuzzy finder.
-set rtp+=~/.fzf
+nmap <leader>z :FZF<cr>
+set rtp+=~/local/fzf
 
-" Find repository root directory of a given version control system
-" by searching upwards starting from the current directory.
-" The argument to this function is the hidden repository directory
-" to search for, e.g., .hg, .git or .svn.
-function! s:FindRepoRootCVS(cvsdir)
-  " Repository root and candidate root.
-  let l:reporoot = getcwd()
-  let l:candroot = getcwd()
-  " Limit the number of directory levels to search upwards.
-  let l:i = 8
-  while i != 0 && l:candroot != "/"
-    if "" != finddir(a:cvsdir, l:candroot)
-      let l:reporoot = l:candroot
-    endif
-    let l:candroot = simplify(l:candroot . "/..")
-    let l:i = l:i - 1
-  endwhile
-  return l:reporoot
+" Save files and call make.
+nnoremap <leader>m :wa\|!make<cr>
+
+" Popup menu which can be used to perform a web search for the
+" current word under the cursor position.
+" The handler function receives the window id of the popup and the result
+" index into the list of options. If the popup menu is cancelled the result
+" index is -1.
+function SearchPopupHandleResult(id, result)
+  let l:i0 =  searchpos('\<', 'nb')[1] - 1
+  let l:i1 =  searchpos('\>', 'n')[1] - 2
+  let l:word = getline('.')[l:i0 : l:i1]
+  if a:result == 1
+    let l:domain = 'https://en.wikipedia.org/wiki/'
+    let l:url = '"' . l:domain . l:word . '"'
+    call system('snap run firefox ' . l:url)
+  elseif a:result == 2
+    let l:domain = 'https://duckduckgo.com/'
+    let l:url = '"' . l:domain . '?sites=cppreference.com&q=' . l:word . '"'
+    call system('snap run firefox ' . l:url)
+  endif
 endfunction
-" Find repository root by trying out different CVS implementations.
-function! s:FindRepoRoot()
-  let l:cvsdirlist = [".git", ".hg", ".svn"]
-  let l:reporoot = getcwd()
-  for l:cvsdir in l:cvsdirlist
-    let l:reporoot = <sid>FindRepoRootCVS(l:cvsdir)
-    if l:reporoot != getcwd()
-      break
-    endif
-  endfor
-  return l:reporoot
+function SearchPopupOpen()
+  let l:id = popup_menu(['Wikipedia', 'Cppreference'],
+                      \ #{callback: 'SearchPopupHandleResult'})
 endfunction
-" Use the fzf fuzzy finder to search relative to the repository root.
-nnoremap <leader>r :FZF <c-r>=<sid>FindRepoRoot()<cr><cr>
+nnoremap <leader>s :call SearchPopupOpen()<cr>
 
-" UltiSnips plugin from github.com/sirver/ultisnips.
-" Directory where snippet definitions files are placed.
-let g:UltiSnipsSnippetsDir="~/.vim/UltiSnips"
-
-" Trigger configuration.
-" Do not use <tab> if you use https://github.com/Valloric/YouCompleteMe.
-let g:UltiSnipsExpandTrigger="<c-x><c-u>"
-let g:UltiSnipsJumpForwardTrigger="<c-j>"
-let g:UltiSnipsJumpBackwardTrigger="<c-k>"
-
-" If you want :UltiSnipsEdit to split your window.
-let g:UltiSnipsEditSplit="vertical"
-
-" Vundle requires to disable the filetype plugin.
-" The file type plugin can be enabled when Vundle has finished.
-filetype off
-
-" Install YCM via Vundle.
-set rtp^=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-Plugin 'VundleVim/Vundle.vim'
-Plugin 'Valloric/YouCompleteMe'
-call vundle#end()
-
-" Enable automatic detection of filetypes when opening a file or creating
-" a new buffer. Load plugins specific to the type of the file after detection.
-filetype plugin on
